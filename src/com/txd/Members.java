@@ -1,5 +1,7 @@
 package com.txd;
 
+import java.util.Vector;
+
 //子弹类
 class Bullet implements Runnable{
 	int x;
@@ -131,6 +133,8 @@ class Tank{
 
 //敌人的坦克
 class EnemyTank extends Tank{
+	
+	boolean isLive=true;
 	public EnemyTank(int x,int y) {
 		super(x, y);
 	}
@@ -141,6 +145,7 @@ class Hero extends Tank{
 	
 	//子弹
 	Bullet bullet=null;
+	Vector<Bullet> bullets=new Vector<Bullet>();
 	
 	public Hero(int x,int y) {
 		super(x,y);
@@ -150,16 +155,22 @@ class Hero extends Tank{
 	public void shot() {
 		switch (this.direct) {
 		case 0:
+			//创建一颗子弹
 			bullet=new Bullet(x+10, y,0);
+			//把子弹加入向量
+			bullets.add(bullet);
 			break;
 		case 1:
 			bullet=new Bullet(x+30, y+10,1);
+			bullets.add(bullet);
 			break;
 		case 2:
-			bullet=new Bullet(x+100, y+300,2);
+			bullet=new Bullet(x+10, y+30,2);
+			bullets.add(bullet);
 			break;
 		case 3:
 			bullet=new Bullet(x, y+10,3);
+			bullets.add(bullet);
 			break;
 		default:
 			break;
