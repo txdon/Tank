@@ -2,6 +2,48 @@ package com.txd;
 
 import java.util.Vector;
 
+//炸弹类
+class Bomb{
+	//定义炸弹的坐标
+	int x;
+	int y;
+	
+	//定义炸弹的生命
+	int life=9;
+	boolean isLive=true;
+	public Bomb(int x,int y) {
+		// TODO Auto-generated constructor stub
+		this.x=x;
+		this.y=y;
+	}
+	
+	//减少生命值
+	public void lifeDown() {
+		if (life>0) {
+			life--;
+		}else {
+			this.isLive=false;
+		}
+	}
+
+	public int getX() {
+		return x;
+	}
+
+	public void setX(int x) {
+		this.x = x;
+	}
+
+	public int getY() {
+		return y;
+	}
+
+	public void setY(int y) {
+		this.y = y;
+	}
+	
+}
+
 //子弹类
 class Bullet implements Runnable{
 	int x;
@@ -131,12 +173,86 @@ class Tank{
 
 }
 
-//敌人的坦克
-class EnemyTank extends Tank{
+//敌人的坦克，让其自由移动
+class EnemyTank extends Tank implements Runnable{
 	
 	boolean isLive=true;
 	public EnemyTank(int x,int y) {
 		super(x, y);
+	}
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		while (true) {
+			
+			switch (this.direct) {
+			case 0:
+				//for循环控制坦克在一个方向上移动一段距离（30个像素，可修改），方向不要改变的太频繁
+				for (int i = 0; i < 30; i++) {
+					//控制敌人坦克在固定区域内活动，即窗口里面
+					if (y>0) {
+						y-=speed;						
+					}
+					try {
+						//休眠50毫秒，让坦克移动的慢一点（自然一点）
+						Thread.sleep(50);
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}		
+				}
+				break;
+			case 1:
+				for (int i = 0; i < 30; i++) {
+					if (x<400) {
+						x+=speed;						
+					}
+					try {
+						Thread.sleep(50);
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}
+				}
+				break;
+			case 2:
+				for (int i = 0; i < 30; i++) {
+					if (y<300) {
+						y+=speed;						
+					}
+					try {
+						Thread.sleep(50);
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}					
+				}
+				break;
+			case 3:
+				for (int i = 0; i < 30; i++) {
+					if (x>0) {
+						x-=speed;						
+					}
+					try {
+						Thread.sleep(50);
+					} catch (Exception e) {
+						// TODO: handle exception
+						e.printStackTrace();
+					}					
+				}
+				break;
+			default:
+				break;
+			}
+			
+			//让敌人坦克随机改变移动方向
+			this.direct=(int)(Math.random()*4);
+			
+			//判断敌人坦克是否死亡
+			if (isLive==false) {
+				break;
+			}
+		}
 	}
 }
 

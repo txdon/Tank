@@ -49,7 +49,15 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 	//定义敌人的坦克组
 	Vector<EnemyTank> ets=new Vector<EnemyTank>();
 	
+	//定义炸弹集合
+	Vector<Bomb> bombs=new Vector<Bomb>();
+	
 	int enSize=3;
+	
+	//定义三张图片，三张图片实际上是一颗炸弹
+	Image image1=null;
+	Image image2=null;
+	Image image3=null;
 	
 	//构造函数
 	public MyPanel() {
@@ -59,11 +67,20 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 		for (int i = 0; i < enSize; i++) {
 			//创建一个敌人的坦克对象
 			EnemyTank et=new EnemyTank((i+1)*50, 0);
+			Thread thread=new Thread(et);
+			thread.start();
+			
 			et.setColor(0);
 			et.setDirect(2);
 			//加入到坦克组
 			ets.add(et);
 		}
+		
+		//加载图片
+		image1=Toolkit.getDefaultToolkit().getImage(Panel.class.getResource("/bomb_1.gif"));
+		image2=Toolkit.getDefaultToolkit().getImage(Panel.class.getResource("/bomb_2.gif"));
+		image3=Toolkit.getDefaultToolkit().getImage(Panel.class.getResource("/bomb_3.gif"));
+
 	}
 	
 	//重写paint
@@ -86,6 +103,28 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 			}
 			
 		}
+		
+		//画出炸弹
+		for (int i = 0; i < bombs.size(); i++) {
+			//取出炸弹
+			Bomb b=bombs.get(i);
+			if (b.life>6) {
+				g.drawImage(image1, b.getX(), b.getY(), 30, 30, this);
+			}else if (b.life>3) {
+				g.drawImage(image2, b.getX(), b.getY(), 30, 30, this);
+			}else {
+				g.drawImage(image3, b.getX(), b.getY(), 30, 30, this);
+			}
+			
+			//让炸弹的生命值减小
+			b.lifeDown();
+			//如果炸弹生命值为0，则从向量中移除
+			if (b.life==0) {
+				bombs.remove(b);
+			}
+			
+		}
+		
 		//画出敌人的坦克
 		for (int i = 0; i < ets.size(); i++) {
 			EnemyTank et=ets.get(i);
@@ -109,6 +148,10 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 				bullet.isLive=false;
 				//敌人坦克死亡
 				enemyTank.isLive=false;
+				//创建一个炸弹，加入vector
+				Bomb b=new Bomb(enemyTank.getX(), enemyTank.getY());
+				bombs.add(b);
+				
 			}
 			break;
 		case 1:
@@ -119,6 +162,9 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 				bullet.isLive=false;
 				//敌人坦克死亡
 				enemyTank.isLive=false;
+				//创建一个炸弹，加入vector
+				Bomb b=new Bomb(enemyTank.getX(), enemyTank.getY());
+				bombs.add(b);
 			}
 			break;
 		default:
