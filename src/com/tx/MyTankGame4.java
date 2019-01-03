@@ -1,8 +1,9 @@
 /**
- * 功能：坦克游戏2.0
+ * 功能：坦克游戏3.0
  * 1.画出坦克
  * 2.我的坦克可以上下左右移动
  * 3.可以发射子弹，子弹连发(最多连发5颗)
+ * 4.敌人坦克可以连发子弹，并且可以互相攻击
  */
 
 package com.tx;
@@ -89,7 +90,10 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 		
 		g.fillRect(0, 0, 400, 300);
 		//画出自己的坦克
-		this.drawTank(hero.getX(), hero.getY(), g, hero.getDirect(), 1);
+		if (hero.isLive) {
+			
+			this.drawTank(hero.getX(), hero.getY(), g, hero.getDirect(), 1);
+		}
 		
 		for (int i = 0; i < hero.bullets.size(); i++) {
 			Bullet myBullet=hero.bullets.get(i);
@@ -148,35 +152,73 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 		}
 	}
 	
+	//判断我的坦克是否被击中
+	public void hitMe() {
+		//取出每一个敌人的坦克
+		for (int i = 0; i < ets.size(); i++) {
+			//取出坦克
+			EnemyTank enemyTank=ets.get(i);
+			if (enemyTank.isLive) {
+				for (int j = 0; j < enemyTank.bullets.size(); j++) {
+					//取出子弹
+					Bullet bullet=enemyTank.bullets.get(j);
+					if (bullet.isLive) {
+						this.hitTank(bullet, hero);
+					}
+				}				
+			}
+		}
+	}
+	
+	//判断我的子弹是否击中敌人的坦克
+	public void hitEnemyTank() {
+		//判断是否击中敌人的坦克
+		for (int i = 0; i < hero.bullets.size(); i++) {
+			//取出子弹
+			Bullet bullet=hero.bullets.get(i);
+			if (bullet.isLive) {
+				//取出每个坦克，与它判断
+				for (int j = 0; j < enSize; j++) {
+					//取出坦克
+					EnemyTank et=ets.get(j);
+					if (et.isLive) {
+						
+						this.hitTank(bullet, et);
+					}
+				}
+			}
+		}
+	}
+	
 	//写一个函数专门判断子弹是否击中敌人坦克
-	public void hitTank(Bullet bullet,EnemyTank enemyTank) {
+	public void hitTank(Bullet bullet,Tank tank) {
 		//判断该坦克的方向
-		switch (enemyTank.direct) {
-		//如果敌人坦克的方向是上或者是下
+		switch (tank.direct) {
+		//如果坦克的方向是上或者是下
 		case 0:
 		case 2:
-			if (bullet.getX()>enemyTank.getX() && bullet.getX()<enemyTank.getX()+20 && bullet.getY()>enemyTank.getY() && bullet.getY()<enemyTank.getY()+30) {
+			if (bullet.getX()>tank.getX() && bullet.getX()<tank.getX()+20 && bullet.getY()>tank.getY() && bullet.getY()<tank.getY()+30) {
 				//击中
 				//子弹死亡
 				bullet.isLive=false;
-				//敌人坦克死亡
-				enemyTank.isLive=false;
+				//坦克死亡
+				tank.isLive=false;
 				//创建一个炸弹，加入vector
-				Bomb b=new Bomb(enemyTank.getX(), enemyTank.getY());
+				Bomb b=new Bomb(tank.getX(), tank.getY());
 				bombs.add(b);
 				
 			}
 			break;
 		case 1:
 		case 3:
-			if (bullet.getX()>enemyTank.getX() && bullet.getX()<enemyTank.getX()+30 && bullet.getY()>enemyTank.getY() && bullet.getY()<enemyTank.getY()+20) {
+			if (bullet.getX()>tank.getX() && bullet.getX()<tank.getX()+30 && bullet.getY()>tank.getY() && bullet.getY()<tank.getY()+20) {
 				//击中
 				//子弹死亡
 				bullet.isLive=false;
-				//敌人坦克死亡
-				enemyTank.isLive=false;
+				//坦克死亡
+				tank.isLive=false;
 				//创建一个炸弹，加入vector
-				Bomb b=new Bomb(enemyTank.getX(), enemyTank.getY());
+				Bomb b=new Bomb(tank.getX(), tank.getY());
 				bombs.add(b);
 			}
 			break;
@@ -320,22 +362,10 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 				e.printStackTrace();
 			}
 			
-			//判断是否击中
-			for (int i = 0; i < hero.bullets.size(); i++) {
-				//取出子弹
-				Bullet bullet=hero.bullets.get(i);
-				if (bullet.isLive) {
-					//取出每个坦克，与它判断
-					for (int j = 0; j < enSize; j++) {
-						//取出坦克
-						EnemyTank et=ets.get(j);
-						if (et.isLive) {
-							
-							this.hitTank(bullet, et);
-						}
-					}
-				}
-			}
+			//函数，判断我的子弹是否击中敌人
+			this.hitEnemyTank();
+			//函数，判断敌人的子弹是否击中我
+			this.hitMe();
 			
 			//重绘
 			this.repaint();

@@ -125,6 +125,8 @@ class Tank{
 	//坦克的速度
 	int speed=1;
 	
+	boolean isLive=true;
+	
 	//子弹
 	Bullet bullet=null;
 	Vector<Bullet> bullets=new Vector<Bullet>();
@@ -210,7 +212,6 @@ class Tank{
 //敌人的坦克，让其自由移动
 class EnemyTank extends Tank implements Runnable{
 	
-	boolean isLive=true;
 	public EnemyTank(int x,int y) {
 		super(x, y);
 	}
@@ -233,7 +234,10 @@ class EnemyTank extends Tank implements Runnable{
 					} catch (Exception e) {
 						// TODO: handle exception
 						e.printStackTrace();
-					}		
+					}	
+					if (y==50||y==100) {
+						this.shot();
+					}
 				}
 				break;
 			case 1:
@@ -247,19 +251,27 @@ class EnemyTank extends Tank implements Runnable{
 						// TODO: handle exception
 						e.printStackTrace();
 					}
+					if (x==267||x==334) {
+						
+						this.shot();
+					}
 				}
 				break;
 			case 2:
 				for (int i = 0; i < 30; i++) {
 					if (y<300) {
-						y+=speed;						
+						y+=speed;
 					}
 					try {
 						Thread.sleep(50);
 					} catch (Exception e) {
 						// TODO: handle exception
 						e.printStackTrace();
-					}					
+					}	
+					if (y==200||y==250) {
+						
+						this.shot();
+					}
 				}
 				break;
 			case 3:
@@ -272,7 +284,11 @@ class EnemyTank extends Tank implements Runnable{
 					} catch (Exception e) {
 						// TODO: handle exception
 						e.printStackTrace();
-					}					
+					}
+					if (x==67||x==134) {
+						
+						this.shot();
+					}
 				}
 				break;
 			default:
@@ -305,7 +321,7 @@ class Hero extends Tank{
 	public void moveRight() {
 		x+=speed;
 	}
-	//坦克向右移动
+	//坦克向右移动7
 	public void moveDown() {
 		y+=speed;
 	}
