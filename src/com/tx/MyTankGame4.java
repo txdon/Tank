@@ -12,7 +12,9 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Vector;
+import java.io.*;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 
 public class MyTankGame4 extends JFrame{
@@ -77,10 +79,19 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 			ets.add(et);
 		}
 		
-		//º”‘ÿÕº∆¨
-		image1=Toolkit.getDefaultToolkit().getImage(Panel.class.getResource("/bomb_1.gif"));
-		image2=Toolkit.getDefaultToolkit().getImage(Panel.class.getResource("/bomb_2.gif"));
-		image3=Toolkit.getDefaultToolkit().getImage(Panel.class.getResource("/bomb_3.gif"));
+		try {
+			image1=ImageIO.read(new File("res/bomb_1.gif"));
+			image2=ImageIO.read(new File("res/bomb_2.gif"));
+			image3=ImageIO.read(new File("res/bomb_3.gif"));
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		}
+		
+//		//º”‘ÿÕº∆¨
+//		image1=Toolkit.getDefaultToolkit().getImage(Panel.class.getResource("/bomb_1.gif"));
+//		image2=Toolkit.getDefaultToolkit().getImage(Panel.class.getResource("/bomb_2.gif"));
+//		image3=Toolkit.getDefaultToolkit().getImage(Panel.class.getResource("/bomb_3.gif"));
 
 	}
 	
