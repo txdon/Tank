@@ -1,34 +1,61 @@
 /**
- * 功能：坦克游戏3.0
+ * 功能：坦克游戏4.0
  * 1.画出坦克
  * 2.我的坦克可以上下左右移动
  * 3.可以发射子弹，子弹连发(最多连发5颗)
  * 4.敌人坦克可以连发子弹，并且可以互相攻击
+ * 5.可以记录我的坦克击毁敌人坦克的数量，并且可以恢复到某一时刻的游戏状态
  */
 
-package com.tx;
+package com.t;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Vector;
+import java.util.regex.Pattern;
 import java.io.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
-public class MyTankGame4 extends JFrame{
+public class MyTankGame5 extends JFrame implements ActionListener{
+	//定义组件
+	//定义菜单栏
+	JMenuBar jMenuBar=null;
+	//定义菜单
+	JMenu jMenu=null;
+	//定义菜单子选项
+	JMenuItem jMenuItem=null;
+	JMenuItem jMenuItem2=null;
+	
+	//定义面板
+	MyPanel mp=null;
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		MyTankGame4 my=new MyTankGame4();
+		MyTankGame5 my=new MyTankGame5();
 	}
 	
-	public MyTankGame4() {
+	public MyTankGame5() {
 		// TODO Auto-generated constructor stub
-		MyPanel mp=new MyPanel();
+		mp=new MyPanel();
 		
-		//启动mp线程
+		//创建菜单栏
+		jMenuBar=new JMenuBar();
+		//创建菜单
+		jMenu=new JMenu("文件");
+		//创建菜单子选项
+		jMenuItem=new JMenuItem("读档");
+		jMenuItem2=new JMenuItem("存档");
+		
+		jMenuBar.add(jMenu);
+		jMenu.add(jMenuItem);
+		jMenu.add(jMenuItem2);
+		
+		//启动mp线程 
 		Thread t2=new Thread(mp);
 		t2.start();
 		
@@ -36,10 +63,77 @@ public class MyTankGame4 extends JFrame{
 		
 		//注册监听
 		this.addKeyListener(mp);
+		jMenuItem.addActionListener(this);
+		jMenuItem.setActionCommand("open");
+		jMenuItem2.addActionListener(this);
+		jMenuItem2.setActionCommand("save");
+		
+		this.setJMenuBar(jMenuBar);
 		
 		this.setSize(400,300);
 		this.setVisible(true);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		// TODO Auto-generated method stub
+		if (e.getActionCommand().equals("open")) {
+			
+			//读档
+			
+			FileReader fileReader=null;
+			BufferedReader bufferedReader=null;
+			
+			try {
+				fileReader=new FileReader("res/record.txt");
+				bufferedReader=new BufferedReader(fileReader);
+				
+				String s="";
+				while ((s=bufferedReader.readLine())!=null) {
+					System.out.println(Pattern.compile(":").split(s));
+				}
+				
+			} catch (Exception e2) {
+				// TODO: handle exception
+				e2.printStackTrace();
+			}finally {
+				
+			}
+			
+		}else if (e.getActionCommand().equals("save")) {
+			
+			//存档
+			
+			FileWriter fileWriter=null;
+			BufferedWriter bufferedWriter=null;
+			
+			try {
+				fileWriter=new FileWriter("res/record.txt");
+				bufferedWriter=new BufferedWriter(fileWriter);
+				//保存我方坦克的位置坐标--0
+				bufferedWriter.write("0 "+Integer.toString(mp.hero.getX())+" "+Integer.toString(mp.hero.getY())+"\r\n");
+				//保存敌人坦克的位置坐标
+				for (int i = 0; i < mp.ets.size(); i++) {
+					//从敌人坦克组中取出一个敌人坦克--1
+					EnemyTank enemyTank=mp.ets.get(i);
+					bufferedWriter.write("1 "+Integer.toString(enemyTank.getX())+" "+Integer.toString(enemyTank.getY())+"\r\n");					
+				}
+				
+			} catch (Exception e2) {
+				// TODO: handle exception
+				e2.printStackTrace();
+			}finally {
+				try {
+					//关闭文件流
+					bufferedWriter.close();
+					fileWriter.close();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
+		}
 	}
 
 }
@@ -56,6 +150,8 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 	Vector<Bomb> bombs=new Vector<Bomb>();
 	
 	int enSize=3;
+	
+	int destroyEnemyTankNum=0;
 	
 	//定义三张图片，三张图片实际上是一颗炸弹
 	Image image1=null;
@@ -120,6 +216,9 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 			
 		}
 		
+		g.setColor(Color.red);
+		g.drawString("击毁数："+Integer.toString(destroyEnemyTankNum), 320, 15);
+		
 		//画出炸弹
 		for (int i = 0; i < bombs.size(); i++) {
 			//取出炸弹
@@ -164,6 +263,42 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 		}
 	}
 	
+	//记录我方坦克击毁敌人坦克的数量
+	public void recordNum(int num, Hero hero, Vector<EnemyTank> enemyTanks) {
+		
+		FileWriter fileWriter=null;
+		BufferedWriter bufferedWriter=null;
+		
+		try {
+			fileWriter=new FileWriter("res/record.txt");
+			bufferedWriter=new BufferedWriter(fileWriter);
+			
+			bufferedWriter.write(Integer.toString(num)+"\r\n");
+			
+			bufferedWriter.write(Integer.toString(hero.getX())+" ");
+			bufferedWriter.write(Integer.toString(hero.getY())+"\r\n");
+			
+			for (int i = 0; i < enemyTanks.size(); i++) {
+				EnemyTank enemyTank=enemyTanks.get(i);
+				bufferedWriter.write(Integer.toString(enemyTank.getX())+" ");
+				bufferedWriter.write(Integer.toString(enemyTank.getY())+"\r\n");
+			}
+			
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		}finally {
+			try {
+				bufferedWriter.close();
+				fileWriter.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+	}
+	
 	//判断我的坦克是否被击中
 	public void hitMe() {
 		//取出每一个敌人的坦克
@@ -196,6 +331,10 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 					if (et.isLive) {
 						
 						this.hitTank(bullet, et);
+						if (!et.isLive) {
+							destroyEnemyTankNum++;
+							//recordNum(destroyEnemyTankNum,hero,ets);
+						}
 					}
 				}
 			}
@@ -378,6 +517,8 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 			this.hitEnemyTank();
 			//函数，判断敌人的子弹是否击中我
 			this.hitMe();
+			
+			//recordNum(destroyEnemyTankNum,hero,ets);
 			
 			//重绘
 			this.repaint();
