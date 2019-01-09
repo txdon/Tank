@@ -77,8 +77,8 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 			et.setDirect(2);
 			//加入到坦克组
 			ets.add(et);
-		}
-		
+		}	
+
 		//加载图片
 		try {
 			image1=ImageIO.read(new File("res/bomb_1.gif"));
@@ -90,6 +90,9 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 		}
 		
 		//加载图片,下面这种方法加载图片会出现问题，而且也不能用这样的路径：res/bomb_1.gif来加载图片
+
+//		//加载图片
+
 //		image1=Toolkit.getDefaultToolkit().getImage(Panel.class.getResource("/bomb_1.gif"));
 //		image2=Toolkit.getDefaultToolkit().getImage(Panel.class.getResource("/bomb_2.gif"));
 //		image3=Toolkit.getDefaultToolkit().getImage(Panel.class.getResource("/bomb_3.gif"));
