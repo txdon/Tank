@@ -1,14 +1,19 @@
 /**
  * 功能：坦克游戏4.0
- * 1.画出坦克
+ * 1.画出坦克 
  * 2.我的坦克可以上下左右移动
  * 3.可以发射子弹，子弹连发(最多连发5颗)
  * 4.敌人坦克可以连发子弹，并且可以互相攻击
- * 5.可以记录我的坦克击毁敌人坦克的数量，并且可以恢复到某一时刻的游戏状态(有点小瑕疵，读档暂停后，坦克还会移动，只是不会画出来，可以通过标志位解决，此处没有实现)
- * 		5.1.有点僵硬，其实可以直接通过让坦克和子弹的速度为0，并保持坦克的方向不变就可以做到
+ * 5.击中坦克的爆炸效果
+ * 6.防止敌人坦克重叠运动
+ * 7.可以分关
+ * 8.可以在玩游戏的时候暂停和继续
+ * 		8.1当用户点击暂停是，子弹和坦克的速度设为0，并让坦克的方向保持不变
+ * 9.可以记录玩家的成绩
+ * 10.java如何操作声音
  */
 
-package com.t;
+package com.zhj;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -16,62 +21,68 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Vector;
-import java.lang.String;
 import java.io.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
-public class MyTankGame5 extends JFrame implements ActionListener{
-	//定义组件
-	//定义菜单栏
-	JMenuBar jMenuBar=null;
+import org.omg.CORBA.PUBLIC_MEMBER;
+
+public class MyTankGame4_1 extends JFrame implements ActionListener{
+
+	MyPanel mp=null;
+	
+	//定义一个开始的面板
+	MyStartPanel msp=null;
+	
 	//定义菜单
+	JMenuBar jMenuBar=null;
+	//开始游戏
 	JMenu jMenu=null;
-	//定义菜单子选项
-	JMenuItem jMenuItem=null;
+	JMenuItem jMenuItem1=null;
 	JMenuItem jMenuItem2=null;
 	
-	//定义面板
-	MyPanel mp=null;
-
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		MyTankGame5 my=new MyTankGame5();
+		MyTankGame4_1 my=new MyTankGame4_1();
 	}
 	
-	public MyTankGame5() {
+	public MyTankGame4_1() {
 		// TODO Auto-generated constructor stub
-		mp=new MyPanel();
 		
-		//创建菜单栏
-		jMenuBar=new JMenuBar();
 		//创建菜单
-		jMenu=new JMenu("文件");
-		//创建菜单子选项
-		jMenuItem=new JMenuItem("读档");
-		jMenuItem2=new JMenuItem("存档");
-		
-		jMenuBar.add(jMenu);
-		jMenu.add(jMenuItem);
-		jMenu.add(jMenuItem2);
-		
-		//启动mp线程 
-		Thread t2=new Thread(mp);
-		t2.start();
-		
-		this.add(mp);
-		
+		jMenuBar=new JMenuBar();
+		jMenu=new JMenu("游戏（G）");
+		//设置快捷方式
+		jMenu.setMnemonic('G');
+		jMenuItem1=new JMenuItem("开始新游戏（N）");
+		jMenuItem2=new JMenuItem("退出游戏（E）");
+		jMenuItem1.setMnemonic('N');
+		jMenuItem2.setMnemonic('E');
+
 		//注册监听
-		this.addKeyListener(mp);
-		jMenuItem.addActionListener(this);
-		jMenuItem.setActionCommand("open");
+		jMenuItem1.addActionListener(this);
+		jMenuItem1.setActionCommand("newgame");
 		jMenuItem2.addActionListener(this);
-		jMenuItem2.setActionCommand("save");
+		jMenuItem2.setActionCommand("exit");
 		
+		//加入菜单
+		jMenuBar.add(jMenu);
+		jMenu.add(jMenuItem1);
+		jMenu.add(jMenuItem2);
+		//放到窗口中
 		this.setJMenuBar(jMenuBar);
 		
-		this.setSize(400,300);
+		//创建开始面板
+		msp=new MyStartPanel();
+		//启动msp线程
+		Thread thread=new Thread(msp);
+		thread.start();
+		
+		this.add(msp);
+
+		//设置窗口属性
+		this.setSize(600,500);
 		this.setVisible(true);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
@@ -79,89 +90,69 @@ public class MyTankGame5 extends JFrame implements ActionListener{
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		// TODO Auto-generated method stub
-		if (e.getActionCommand().equals("open")) {
+		if (e.getActionCommand().equals("newgame")) {
+			//创建游戏面板
+			mp=new MyPanel();
 			
-			//读档
+			//启动mp线程
+			Thread t2=new Thread(mp);
+			t2.start();
+			//先删除旧的面板，再加入新的面板
+			this.remove(msp);
+			this.add(mp);
 			
-			FileReader fileReader=null;
-			BufferedReader bufferedReader=null;
+			//注册监听
+			this.addKeyListener(mp);
 			
-			try {
-				fileReader=new FileReader("res/record.txt");
-				bufferedReader=new BufferedReader(fileReader);
-				
-				int i=0;
-				String s="";
-				String[] nStrings= {};
-				while ((s=bufferedReader.readLine())!=null) {
-					nStrings=s.split(" ");
-					if (nStrings[0].equals("0")) {
-						mp.hero.setX(Integer.valueOf(nStrings[1]));
-						mp.hero.setY(Integer.valueOf(nStrings[2]));
-						System.out.println("读取我方坦克位置成功...");
-					}else if (nStrings[0].equals("1")) {
-						EnemyTank enemyTank=mp.ets.get(i++);
-						enemyTank.setX(Integer.valueOf(nStrings[1]));
-						enemyTank.setY(Integer.valueOf(nStrings[2]));
-						
-						enemyTank.setSpeed(0);
-						
-						System.out.println("读取敌人坦克位置成功...");
-						//弹窗提示
-						//JOptionPane.showMessageDialog(null, "碰到了", "提示", JOptionPane.INFORMATION_MESSAGE);
-						
-					}
-				}
-			} catch (Exception e2) {
-				// TODO: handle exception
-				e2.printStackTrace();
-			}finally {
-				try {
-					bufferedReader.close();
-					fileReader.close();
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-			}
-			//读档后暂停
-			mp.repaint();
+			//显示，刷新
+			this.setVisible(true);
+		}else if (e.getActionCommand().equals("exit")) {
+			//用户点击了退出系统的菜单，0代表正常退出
+			System.exit(0);
+		}
+	}
+}
+
+
+//就是一个提示类
+class MyStartPanel extends JPanel implements Runnable{
+	
+	int times=0;
+	public void paint(Graphics g) {
+		
+		super.paint(g);
+		
+		g.fillRect(0, 0, 400, 300);
+		
+		//提示信息
+		if (times%2==0) {
 			
-		}else if (e.getActionCommand().equals("save")) {
-			
-			//存档
-			
-			FileWriter fileWriter=null;
-			BufferedWriter bufferedWriter=null;
-			
-			try {
-				fileWriter=new FileWriter("res/record.txt");
-				bufferedWriter=new BufferedWriter(fileWriter);
-				//保存我方坦克的位置坐标--0
-				bufferedWriter.write("0 "+Integer.toString(mp.hero.getX())+" "+Integer.toString(mp.hero.getY())+"\r\n");
-				//保存敌人坦克的位置坐标
-				for (int i = 0; i < mp.ets.size(); i++) {
-					//从敌人坦克组中取出一个敌人坦克--1
-					EnemyTank enemyTank=mp.ets.get(i);
-					bufferedWriter.write("1 "+Integer.toString(enemyTank.getX())+" "+Integer.toString(enemyTank.getY())+"\r\n");					
-				}
-				
-			} catch (Exception e2) {
-				// TODO: handle exception
-				e2.printStackTrace();
-			}finally {
-				try {
-					//关闭文件流
-					bufferedWriter.close();
-					fileWriter.close();
-				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-			}
+			g.setColor(Color.yellow);
+			Font myFont=new Font("华文新魏", Font.BOLD, 30);
+			g.setFont(myFont);
+			g.drawString("stage: 1", 150, 150);
 		}
 	}
 
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		//使文字实现闪烁效果
+		while (true) {
+			//休眠
+			try {
+				Thread.sleep(100);
+			} catch (Exception e) {
+				// TODO: handle exception
+				e.printStackTrace();
+			}
+			
+			times++;
+			
+			//重画
+			this.repaint();
+		}
+	}
 }
 
 class MyPanel extends JPanel implements KeyListener,Runnable{
@@ -175,15 +166,13 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 	//定义炸弹集合
 	Vector<Bomb> bombs=new Vector<Bomb>();
 	
-	int enSize=3;
-	//是否读档
-	
-	int destroyEnemyTankNum=0;
+	int enSize=20;
 	
 	//定义三张图片，三张图片实际上是一颗炸弹
 	Image image1=null;
 	Image image2=null;
 	Image image3=null;
+	
 	
 	//构造函数
 	public MyPanel() {
@@ -219,11 +208,35 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 
 	}
 	
+	//画出提示信息
+	public void showInfo(Graphics g) {
+		//画出提示信息坦克（该坦克不参与战斗）
+		this.drawTank(80, 330, g, 0, 0);
+		g.setColor(Color.black);
+		g.drawString(Recorder.getEnNum()+"", 110, 350);
+		this.drawTank(140, 330, g, 0, 1);
+		g.setColor(Color.black);
+		g.drawString(Recorder.getMyLife()+"", 170, 350);
+		
+		//画出玩家的总成绩
+		g.setColor(Color.black);
+		Font myFont=new Font("宋体", Font.BOLD, 30);
+		g.setFont(myFont);
+		g.drawString("score", 420, 30);
+		this.drawTank(420, 60, g, 0, 0);
+		g.setColor(Color.black);
+		g.drawString(Recorder.getAllEnNum()+"", 455, 85);
+	}
+	
 	//重写paint
 	public void paint(Graphics g) {
 		super.paint(g);
 		
 		g.fillRect(0, 0, 400, 300);
+		
+		//画出提示信息坦克（该坦克不参与战斗）
+		showInfo(g);
+		
 		//画出自己的坦克
 		if (hero.isLive) {
 			
@@ -242,9 +255,6 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 			}
 			
 		}
-		
-		g.setColor(Color.red);
-		g.drawString("击毁数："+Integer.toString(destroyEnemyTankNum), 320, 15);
 		
 		//画出炸弹
 		for (int i = 0; i < bombs.size(); i++) {
@@ -290,42 +300,6 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 		}
 	}
 	
-	//记录我方坦克击毁敌人坦克的数量
-	public void recordNum(int num, Hero hero, Vector<EnemyTank> enemyTanks) {
-		
-		FileWriter fileWriter=null;
-		BufferedWriter bufferedWriter=null;
-		
-		try {
-			fileWriter=new FileWriter("res/record.txt");
-			bufferedWriter=new BufferedWriter(fileWriter);
-			
-			bufferedWriter.write(Integer.toString(num)+"\r\n");
-			
-			bufferedWriter.write(Integer.toString(hero.getX())+" ");
-			bufferedWriter.write(Integer.toString(hero.getY())+"\r\n");
-			
-			for (int i = 0; i < enemyTanks.size(); i++) {
-				EnemyTank enemyTank=enemyTanks.get(i);
-				bufferedWriter.write(Integer.toString(enemyTank.getX())+" ");
-				bufferedWriter.write(Integer.toString(enemyTank.getY())+"\r\n");
-			}
-			
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
-		}finally {
-			try {
-				bufferedWriter.close();
-				fileWriter.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		
-	}
-	
 	//判断我的坦克是否被击中
 	public void hitMe() {
 		//取出每一个敌人的坦克
@@ -336,8 +310,8 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 				for (int j = 0; j < enemyTank.bullets.size(); j++) {
 					//取出子弹
 					Bullet bullet=enemyTank.bullets.get(j);
-					if (bullet.isLive && hero.isLive) {
-						this.hitTank(bullet, hero);
+					if (bullet.isLive) {
+						this.hitTank(bullet, hero, 1);
 					}
 				}				
 			}
@@ -357,19 +331,15 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 					EnemyTank et=ets.get(j);
 					if (et.isLive) {
 						
-						this.hitTank(bullet, et);
-						if (!et.isLive) {
-							destroyEnemyTankNum++;
-							//recordNum(destroyEnemyTankNum,hero,ets);
-						}
+						this.hitTank(bullet, et, 0);
 					}
 				}
 			}
 		}
 	}
 	
-	//写一个函数专门判断子弹是否击中敌人坦克
-	public void hitTank(Bullet bullet,Tank tank) {
+	//写一个函数专门判断子弹是否击中坦克
+	public void hitTank(Bullet bullet, Tank tank, int type) {
 		//判断该坦克的方向
 		switch (tank.direct) {
 		//如果坦克的方向是上或者是下
@@ -381,6 +351,12 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 				bullet.isLive=false;
 				//坦克死亡
 				tank.isLive=false;
+				//减少坦克的数量
+				if (type==0) {				
+					Recorder.reduceEnNum();
+				}else if (type==1) {
+					Recorder.reduceHeroNum();
+				}
 				//创建一个炸弹，加入vector
 				Bomb b=new Bomb(tank.getX(), tank.getY());
 				bombs.add(b);
@@ -395,6 +371,12 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 				bullet.isLive=false;
 				//坦克死亡
 				tank.isLive=false;
+				//减少坦克的数量
+				if (type==0) {
+					Recorder.reduceEnNum();					
+				}else if (type==1) {
+					Recorder.reduceHeroNum();
+				}
 				//创建一个炸弹，加入vector
 				Bomb b=new Bomb(tank.getX(), tank.getY());
 				bombs.add(b);
@@ -518,14 +500,6 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 			
 		}
 		
-		if (e.getKeyCode()==KeyEvent.VK_SPACE) {
-			//按空格键取消暂停
-			for (int i = 0; i < ets.size(); i++) {
-				EnemyTank enemyTank=ets.get(i);
-				enemyTank.setSpeed(1);
-			}
-		}
-		
 		//必须重新绘制Panel
 		this.repaint();
 	}
@@ -553,9 +527,7 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 			//函数，判断敌人的子弹是否击中我
 			this.hitMe();
 			
-			//recordNum(destroyEnemyTankNum,hero,ets);
-			
-			//重绘			
+			//重绘
 			this.repaint();
 		}
 	}

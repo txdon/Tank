@@ -1,7 +1,45 @@
-package com.t;
+package com.zhj;
 
-import java.awt.MenuComponent;
 import java.util.Vector;
+
+//记录类
+class Recorder{
+	//记录每关有多少敌人
+	private static int enNum=20;
+	//设置我有多少可以用的人
+	private static int myLife=3;
+	//记录总共消灭了多少敌人
+	private static int allEnNum=0;
+	
+	public static int getEnNum() {
+		return enNum;
+	}
+	public static void setEnNum(int enNum) {
+		Recorder.enNum = enNum;
+	}
+	public static int getMyLife() {
+		return myLife;
+	}
+	public static void setMyLife(int myLife) {
+		Recorder.myLife = myLife;
+	}
+	public static int getAllEnNum() {
+		return allEnNum;
+	}
+	public static void setAllEnNum(int allEnNum) {
+		Recorder.allEnNum = allEnNum;
+	}
+	//减少敌人坦克的数量
+	public static void reduceEnNum() {
+		enNum--;
+		allEnNum++;
+	}
+	
+	//减少我方坦克的数量
+	public static void reduceHeroNum() {
+		myLife--;
+	}
+}
 
 //炸弹类
 class Bomb{
@@ -216,7 +254,6 @@ class EnemyTank extends Tank implements Runnable{
 	public EnemyTank(int x,int y) {
 		super(x, y);
 	}
-	
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
@@ -243,7 +280,7 @@ class EnemyTank extends Tank implements Runnable{
 				}
 				break;
 			case 1:
-				for (int i = 0; i < 30; i++) {
+				for (int i = 0;  i < 30; i++) {
 					if (x<400) {
 						x+=speed;						
 					}
