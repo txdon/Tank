@@ -1,5 +1,11 @@
 package com.zhj;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Vector;
 
 //记录类
@@ -10,6 +16,115 @@ class Recorder{
 	private static int myLife=3;
 	//记录总共消灭了多少敌人
 	private static int allEnNum=0;
+	
+	private static FileWriter fw=null;
+	private static BufferedWriter bw=null;
+	private static FileReader fr=null;
+	private static BufferedReader br=null;
+	
+	private static Vector<EnemyTank>enemyTanks=new Vector<EnemyTank>();
+	
+	//恢复存档
+	public static void recGame() {
+		try {
+			fr=new FileReader("res/myRecord.txt");
+			br=new BufferedReader(fr);
+			String s=br.readLine();
+			String[] strings= {};
+			allEnNum=Integer.parseInt(s);
+			while ((s=br.readLine())!=null) {
+				strings=s.split(" ");
+				EnemyTank eTank=new EnemyTank(Integer.parseInt(strings[0]), Integer.parseInt(strings[1]));
+				eTank.setDirect(Integer.parseInt(strings[2]));
+				enemyTanks.add(eTank);
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}finally {
+			try {
+				br.close();
+				fr.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	
+	//保存击毁敌人的数量和敌人坦克坐标、方向
+	public static void keepRecAndEnemyTank() {
+		try {
+			fw=new FileWriter("res/myRecord.txt");
+			bw=new BufferedWriter(fw);
+			bw.write(allEnNum+"\r\n");
+			
+			for (int i = 0; i < enemyTanks.size(); i++) {
+				EnemyTank eTank=enemyTanks.get(i);
+				if (eTank.isLive) {
+					
+					String s=eTank.getX()+" "+eTank.getY()+" "+eTank.getDirect();
+					bw.write(s+"\r\n");
+				}
+			}
+			
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		}finally {
+			try {
+				bw.close();
+				fw.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	//从文件中读取出记录
+	public static void getRecording() {
+		try {
+			fr=new FileReader("res/record.txt");
+			br=new BufferedReader(fr);
+			String s=br.readLine();
+			allEnNum=Integer.parseInt(s);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}finally {
+			try {
+				br.close();
+				fr.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+	}
+	
+	//将记录写入文件
+	public static void keepRecording() {
+		try {
+			fw=new FileWriter("res/record.txt");
+			bw=new BufferedWriter(fw);
+			bw.write(Integer.toString(allEnNum));
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		}finally {
+			try {
+				bw.close();
+				fw.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	
 	public static int getEnNum() {
 		return enNum;
@@ -29,6 +144,14 @@ class Recorder{
 	public static void setAllEnNum(int allEnNum) {
 		Recorder.allEnNum = allEnNum;
 	}
+	public static Vector<EnemyTank> getEnemyTanks() {
+		return enemyTanks;
+	}
+
+	public static void setEnemyTanks(Vector<EnemyTank> enemyTanks) {
+		Recorder.enemyTanks = enemyTanks;
+	}
+
 	//减少敌人坦克的数量
 	public static void reduceEnNum() {
 		enNum--;

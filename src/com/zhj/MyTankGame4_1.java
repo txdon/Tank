@@ -10,12 +10,14 @@
  * 8.可以在玩游戏的时候暂停和继续
  * 		8.1当用户点击暂停是，子弹和坦克的速度设为0，并让坦克的方向保持不变
  * 9.可以记录玩家的成绩
- * 10.java如何操作声音
+ * 10.存盘和恢复存盘
+ * 11.java如何操作声音（没实现）
  */
 
 package com.zhj;
 
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -41,6 +43,8 @@ public class MyTankGame4_1 extends JFrame implements ActionListener{
 	JMenu jMenu=null;
 	JMenuItem jMenuItem1=null;
 	JMenuItem jMenuItem2=null;
+	JMenuItem jMenuItem3=null;
+	JMenuItem jMenuItem4=null;
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
@@ -57,19 +61,29 @@ public class MyTankGame4_1 extends JFrame implements ActionListener{
 		jMenu.setMnemonic('G');
 		jMenuItem1=new JMenuItem("开始新游戏（N）");
 		jMenuItem2=new JMenuItem("退出游戏（E）");
+		jMenuItem3=new JMenuItem("存盘退出游戏（C）");
+		jMenuItem4=new JMenuItem("恢复存盘（S）");
 		jMenuItem1.setMnemonic('N');
 		jMenuItem2.setMnemonic('E');
+		jMenuItem3.setMnemonic('C');
+		jMenuItem4.setMnemonic('S');
 
 		//注册监听
 		jMenuItem1.addActionListener(this);
 		jMenuItem1.setActionCommand("newgame");
 		jMenuItem2.addActionListener(this);
 		jMenuItem2.setActionCommand("exit");
+		jMenuItem3.addActionListener(this);
+		jMenuItem3.setActionCommand("saveExit");
+		jMenuItem4.addActionListener(this);
+		jMenuItem4.setActionCommand("recgame");
 		
 		//加入菜单
 		jMenuBar.add(jMenu);
 		jMenu.add(jMenuItem1);
 		jMenu.add(jMenuItem2);
+		jMenu.add(jMenuItem3);
+		jMenu.add(jMenuItem4);
 		//放到窗口中
 		this.setJMenuBar(jMenuBar);
 		
@@ -92,7 +106,40 @@ public class MyTankGame4_1 extends JFrame implements ActionListener{
 		// TODO Auto-generated method stub
 		if (e.getActionCommand().equals("newgame")) {
 			//创建游戏面板
-			mp=new MyPanel();
+			mp=new MyPanel("newgame");
+			
+			//启动mp线程
+			Thread t2=new Thread(mp);
+			t2.start();
+			//先删除旧的面板，再加入新的面板
+			this.remove(msp);
+			this.add(mp);
+			
+			//注册监听
+			this.addKeyListener(mp);
+			
+			Recorder.getRecording();
+			
+			//显示，刷新
+			this.setVisible(true);
+			
+			System.out.println("111111111111");
+		}else if (e.getActionCommand().equals("exit")) {
+			//用户点击了退出系统的菜单，0代表正常退出,-1代表异常退出
+			//保存记录--最大消灭敌人坦克的数量
+			Recorder.keepRecording();
+			
+			System.exit(0);
+		}else if (e.getActionCommand().equals("saveExit")) {
+			//存盘退出
+			//将面板上的坦克传给记录类
+			Recorder.setEnemyTanks(mp.ets);
+			//调用记录类的keepRecAndEnemyTank()方法将敌人坦克的坐标和方向写进文件
+			Recorder.keepRecAndEnemyTank();
+			
+			System.exit(0);
+		}else if (e.getActionCommand().equals("recgame")) {
+			mp=new MyPanel("recgame");
 			
 			//启动mp线程
 			Thread t2=new Thread(mp);
@@ -106,9 +153,6 @@ public class MyTankGame4_1 extends JFrame implements ActionListener{
 			
 			//显示，刷新
 			this.setVisible(true);
-		}else if (e.getActionCommand().equals("exit")) {
-			//用户点击了退出系统的菜单，0代表正常退出
-			System.exit(0);
 		}
 	}
 }
@@ -126,7 +170,7 @@ class MyStartPanel extends JPanel implements Runnable{
 		
 		//提示信息
 		if (times%2==0) {
-			
+			//设置画笔颜色、字体
 			g.setColor(Color.yellow);
 			Font myFont=new Font("华文新魏", Font.BOLD, 30);
 			g.setFont(myFont);
@@ -175,22 +219,37 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 	
 	
 	//构造函数
-	public MyPanel() {
+	public MyPanel(String flag) {
 		hero=new Hero(100, 100);
 		
 		//初始化敌人的坦克
-		for (int i = 0; i < enSize; i++) {
-			//创建一个敌人的坦克对象
-			EnemyTank et=new EnemyTank((i+1)*50, 0);
-			Thread thread=new Thread(et);
-			thread.start();
-			
-			et.setColor(0);
-			et.setDirect(2);
-			//加入到坦克组
-			ets.add(et);
+		if (flag.equals("newgame")) {			
+			for (int i = 0; i < enSize; i++) {
+				//创建一个敌人的坦克对象
+				EnemyTank et=new EnemyTank((i+1)*50, 0);
+				Thread thread=new Thread(et);
+				thread.start();
+				
+				et.setColor(0);
+				et.setDirect(2);
+				//加入到坦克组
+				ets.add(et);
+			}	
+		}else if (flag.equals("recgame")) {
+			Recorder.recGame();
+			ets=Recorder.getEnemyTanks();
+			for (int i = 0; i < ets.size(); i++) {
+				//创建一个敌人的坦克对象
+				EnemyTank et=ets.get(i);
+				Thread thread=new Thread(et);
+				thread.start();
+				
+				et.setColor(0);
+				//et.setDirect(2);
+				//加入到坦克组
+				//ets.add(et);
+			}
 		}
-		
 		//加载图片
 		try {
 			image1=ImageIO.read(new File("res/bomb_1.gif"));
@@ -326,7 +385,7 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 			Bullet bullet=hero.bullets.get(i);
 			if (bullet.isLive) {
 				//取出每个坦克，与它判断
-				for (int j = 0; j < enSize; j++) {
+				for (int j = 0; j < ets.size(); j++) {
 					//取出坦克
 					EnemyTank et=ets.get(j);
 					if (et.isLive) {
